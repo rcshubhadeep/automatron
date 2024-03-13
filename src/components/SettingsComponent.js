@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {deleteAPIKey} from '../core/core'
 
 function SettingsComponent({ updateApiKeyPresence }) {
   const [apiKey, setApiKey] = useState('');
@@ -16,7 +17,7 @@ function SettingsComponent({ updateApiKeyPresence }) {
   };
 
   const handleDeleteApiKey = () => {
-    localStorage.removeItem('openAIKey'); // Remove the API key from localStorage
+    deleteAPIKey()
     updateApiKeyPresence(false); // API key is removed, so banner should show
   };
 

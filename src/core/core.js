@@ -1,7 +1,13 @@
 import OpenAI from 'openai';
 
+const keyForAPIKey = "openAIKey";
+
 export function getAPIKey(){
-    return localStorage.getItem('openAIKey');
+    return localStorage.getItem(keyForAPIKey);
+}
+
+export function deleteAPIKey(){
+    localStorage.removeItem(keyForAPIKey)
 }
 
 const openai = new OpenAI({
