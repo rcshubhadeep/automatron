@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SiAzurepipelines, SiTask } from "react-icons/si";
 import { GoGear } from "react-icons/go";
 import SettingsComponent from './SettingsComponent';
 import PipelineComponent from './PipelineComponent';
 import TaskComponent from './TaskComponent';
+import {getAPIKey} from '../core/core'; 
 
 function MainComponent() {
   const [activeSection, setActiveSection] = useState('Pipelines');
+  const [apiKeyExists, setApiKeyExists] = useState(true);
+
+  const updateApiKeyPresence = (presence) => {
+    setApiKeyExists(presence);
+  };
+
+  useEffect(() => {
+    const apiKey = getAPIKey();
+    setApiKeyExists(apiKey !== null);
+  }, []);
 
   const isActive = (sectionName) => activeSection === sectionName ? 'bg-gray-200 dark:bg-gray-700' : '';
 
@@ -38,7 +49,14 @@ function MainComponent() {
       </aside>
 
       <div className="p-4 sm:ml-64 w-full">
-        {activeSection === 'Settings' && <SettingsComponent />}
+      {!apiKeyExists && (
+          <div className="bg-red-500 text-white p-4 rounded-lg">
+            <h2 className="text-lg">API Key Missing</h2>
+            <p>Please set your API key in the Settings.</p>
+          </div>
+        )}
+
+        {activeSection === 'Settings' && <SettingsComponent updateApiKeyPresence={updateApiKeyPresence} />}
         {activeSection === 'Pipelines' && <PipelineComponent />}
         {activeSection === 'Tasks' && <TaskComponent />}
       </div>

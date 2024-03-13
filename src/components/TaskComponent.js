@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete } from "react-icons/ai"; // Import the '+' and 'x' icons
 import {getModels} from "../core/core";
 import {getTasks, addTask, deleteTask} from "../core/db";
+import {TemplateEngine} from "../core/templateEngine";
 
 function TaskComponent() {
     const [tasks, setTasks] = useState(['Task 1', 'Task 2', 'Task 3', 'Task 4']); // Example initial tasks
@@ -12,6 +13,7 @@ function TaskComponent() {
     const [description, setDescription] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
+    console.log(TemplateEngine("Please read the following <%name%>", {name: "Shubha"}));
     
     const handleTaskClick = (task) => {
         console.log(`${task} clicked`);
@@ -86,7 +88,6 @@ function TaskComponent() {
             <div className="flex gap-4"> {/* Added gap between columns */}
                 <div className="w-1/2 space-y-2">
                 {tasks.map((task) => (
-                    console.log(task.id), // Log to see what IDs are being passed
                     <div key={task.id} className="flex justify-between items-center p-2 border bg-blue-500 hover:bg-blue-700 rounded-md text-white">
                         <button
                             onClick={() => handleTaskClick(task.id)} // Assuming you want to handle click based on taskName
