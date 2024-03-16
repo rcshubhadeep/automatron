@@ -75,6 +75,48 @@ export async function addTask(task) {
 }
 
 
+export async function updateTask(taskId, updatedTask) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([taskStoreName], "readwrite");
+        const objectStore = transaction.objectStore(taskStoreName);
+        
+        // First, get the current task to see if the name is being changed.
+        const getRequest = objectStore.get(taskId);
+        getRequest.onerror = () => reject("Error fetching the task to update.");
+
+        getRequest.onsuccess = () => {
+            const existingTask = getRequest.result;
+            if (!existingTask) return reject("Task not found.");
+
+            // If the task name hasn't changed or is empty, proceed with the update.
+            if (updatedTask.taskName === existingTask.taskName || !updatedTask.taskName) {
+                const updateRequest = objectStore.put({ ...updatedTask, id: taskId });
+                updateRequest.onerror = (event) => reject(`Update task error: ${event.target.error.message}`);
+                updateRequest.onsuccess = () => resolve();
+            } else {
+                // Check if another task with the new name already exists.
+                const index = objectStore.index("taskName");
+                const nameCheckRequest = index.get(updatedTask.taskName);
+                nameCheckRequest.onerror = () => reject("Error checking task name uniqueness.");
+
+                nameCheckRequest.onsuccess = () => {
+                    const conflictingTask = nameCheckRequest.result;
+                    if (conflictingTask && conflictingTask.id !== taskId) {
+                        reject("Task name must be unique.");
+                    } else {
+                        // No conflict, or it's the same task, proceed with the update.
+                        const updateRequest = objectStore.put({ ...updatedTask, id: taskId });
+                        updateRequest.onerror = (event) => reject(`Update task error: ${event.target.error.message}`);
+                        updateRequest.onsuccess = () => resolve();
+                    }
+                };
+            }
+        };
+    });
+}
+
+
 
 // Delete a task
 export async function deleteTask(taskId) {

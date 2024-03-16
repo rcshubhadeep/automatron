@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle } from "react-icons/ai"; // Import the '+' and 'x' icons
+import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle, AiOutlineEdit } from "react-icons/ai"; // Import the '+' and 'x' icons
 import {getModels, runSimpleUserPrompt, getReplyString} from "../core/aiRunner";
-import {getTasks, addTask, deleteTask, getTask} from "../core/db";
+import {getTasks, addTask, deleteTask, getTask, updateTask} from "../core/db";
 import {applyTemplate} from "../core/templateEngine";
 
 
@@ -14,6 +14,7 @@ function TaskComponent() {
     const [description, setDescription] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [editingTaskId, setEditingTaskId] = useState(null); // Track the ID of the task being edited
 
     // console.log(applyTemplate("My name is {{ name }}", {name: "SSS"}));
     
@@ -52,30 +53,40 @@ function TaskComponent() {
         clearData();
     }
 
+    const handleEditTask = (task) => {
+        setShowForm(true); // Show the form to edit
+        setEditingTaskId(task.id); // Set the task being edited
+        // Pre-fill the form with task details
+        setTaskName(task.taskName);
+        setModelName(task.model);
+        setDescription(task.description);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if(modelName === ""){
-            // console.log("here")
-            var finalModel = "gpt-3.5 (least powerful)"
-            console.log(modelName)
-        } else {
-            finalModel = modelName
-        }
-        console.log(finalModel)
-        // Assume you have state variables for each form input
-        try{
-            const newTask = {
-                id: Date.now(), // or another method of generating unique IDs
-                taskName: taskName,
-                model: finalModel,
-                description: description,
-            };
-            await addTask(newTask);
+        const taskData = {
+            taskName: taskName,
+            model: modelName || "gpt-3.5 (least powerful)", // Default model if none selected
+            description: description,
+        };
+
+        try {
+            console.log(editingTaskId);
+            // Update existing task
+            if (editingTaskId) {
+                await updateTask(editingTaskId, taskData);
+            } else { // Add new task
+                await addTask({ ...taskData, id: Date.now() }); // Include ID only for new tasks
+            }
+
+            // Fetch updated tasks list and reset form
             const tasksFromDB = await getTasks();
             setTasks(tasksFromDB);
             clearForm();
+            setEditingTaskId(null); // Reset editing state
         } catch (error) {
-            setErrorMessage(error.toString()); // Set the error message
+            console.log(taskData);
+            setErrorMessage(error.toString());
         }
     };
 
@@ -120,6 +131,9 @@ function TaskComponent() {
                         <div>
                             <button className="ml-4" onClick={(event) => handleTaskClick(task.id, event)}> {/* Add a Play button */}
                                 <AiOutlinePlayCircle /> {/* Use the Play icon */}
+                            </button>
+                            <button className="ml-4" onClick={() => handleEditTask(task)}> {/* Add an Edit button */}
+                                <AiOutlineEdit /> {/* Use the Edit icon */}
                             </button>
                             <button onClick={(event) => handleDeleteTask(task.id, event)} className="ml-4">
                                 <AiOutlineDelete />
