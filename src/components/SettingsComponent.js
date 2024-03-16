@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {deleteAPIKey} from '../core/core'
+import {deleteAPIKey} from '../core/aiRunner'
 
 function SettingsComponent({ updateApiKeyPresence }) {
   const [apiKey, setApiKey] = useState('');
@@ -7,7 +7,7 @@ function SettingsComponent({ updateApiKeyPresence }) {
 
   const handleSave = () => {
     // Logic to save the API key
-    console.log('API Key Saved:', apiKey);
+    // console.log('API Key Saved:', apiKey);
     localStorage.setItem('openAIKey', apiKey);
     // Security etc.
     setApiKey('');

@@ -89,3 +89,28 @@ export async function deleteTask(taskId) {
         request.onsuccess = () => resolve();
     });
 }
+
+
+export async function getTask(taskId) {
+    const db = await openDB(); // Assume openDB is a function that opens a connection to your IndexedDB
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([taskStoreName], "readonly"); // Use "readonly" mode since you're only reading data
+        const objectStore = transaction.objectStore(taskStoreName);
+        const request = objectStore.get(taskId); // Use the 'get' method to retrieve a task by its ID
+
+        request.onerror = (event) => {
+            // Handle any errors that occur during the transaction
+            reject(`Get task error: ${event.target.errorCode}`);
+        };
+
+        request.onsuccess = () => {
+            // Check if the task was found (request.result will be undefined if not found)
+            if (request.result) {
+                resolve(request.result); // Return the found task object
+            } else {
+                resolve(null); // Return null if the task wasn't found
+            }
+        };
+    });
+}
+

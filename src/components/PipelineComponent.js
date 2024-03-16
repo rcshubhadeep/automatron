@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AiOutlinePlus, AiOutlineClose } from "react-icons/ai"; // Import the '+' and 'x' icons
-import {getModels} from "../core/core"
+import {getModels} from "../core/aiRunner"
 
 function PipelineComponent() {
   // Example list of pipelines. You might fetch these from a backend or state.

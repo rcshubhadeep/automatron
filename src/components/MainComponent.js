@@ -4,7 +4,7 @@ import { GoGear } from "react-icons/go";
 import SettingsComponent from './SettingsComponent';
 import PipelineComponent from './PipelineComponent';
 import TaskComponent from './TaskComponent';
-import {getAPIKey} from '../core/core'; 
+import {getAPIKey} from '../core/aiRunner'; 
 
 function MainComponent() {
   const [activeSection, setActiveSection] = useState('Pipelines');
