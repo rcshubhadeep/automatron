@@ -3,6 +3,7 @@ import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle, Ai
 import {getModels, runSimpleUserPrompt, getReplyString} from "../core/aiRunner";
 import {getTasks, addTask, deleteTask, getTask, updateTask} from "../core/db";
 import {applyTemplate} from "../core/templateEngine";
+import {parseHandleBar} from '../core/handlebarParser';
 
 
 function TaskComponent() {
@@ -14,20 +15,45 @@ function TaskComponent() {
     const [description, setDescription] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [editingTaskId, setEditingTaskId] = useState(null); // Track the ID of the task being edited
+    const [editingTaskId, setEditingTaskId] = useState(null);
+    const [showAltForm, setShowAltForm] = useState(false); // State to control the alternate form display
+    const [selectedTask, setSelectedTask] = useState(null); // State to hold the selected task data
+    const [inputFields, setInputFields] = useState({}); 
+
 
     // console.log(applyTemplate("My name is {{ name }}", {name: "SSS"}));
     
     const handleTaskClick = async (taskID, event) => {
-        setIsLoading(true); // Start loading
+        // setIsLoading(true); // Start loading
         const task = await getTask(taskID);
-        var prompt = applyTemplate(task.description, {name: "Shubhadeep"});
+        // var prompt = applyTemplate(task.description, {name: "Shubhadeep"});
         // console.log(prompt);
         // console.log(task.model);
-        const result = await runSimpleUserPrompt(prompt, task.model);
-        console.log(getReplyString(result));
-        setIsLoading(false); // Stop loading after the operation is complete
+        // const result = await runSimpleUserPrompt(prompt, task.model);
+        // console.log(getReplyString(result));
+        setSelectedTask(task); // Set the selected task data
+        setShowForm(false); // Hide the main form if it's showing
+        setShowAltForm(true); // Show the alternate form
+        const parsedTemplate = parseHandleBar(task.description);
+        setInputFields(parsedTemplate);
+        // setIsLoading(false); // Stop loading after the operation is complete
     };
+
+    const handleInputChange = (key, value) => {
+        setInputFields(prevFields => ({ ...prevFields, [key]: value }));
+    };
+
+    const clearAltForm = async () => {
+        // console.log(selectedTask);
+        // console.log(inputFields);
+        setIsLoading(true);
+        var prompt = applyTemplate(selectedTask.description, inputFields);
+        const result = await runSimpleUserPrompt(prompt, selectedTask.model);
+        console.log(getReplyString(result));
+        setIsLoading(false);
+        setShowAltForm(false); // Close the alternate form
+        setSelectedTask(null); // Reset the selected task
+    }
 
     const handleDeleteTask = async (taskIdToDelete) => {
         console.log(`Deleting task with ID: ${taskIdToDelete}`);
@@ -54,12 +80,14 @@ function TaskComponent() {
     }
 
     const handleEditTask = (task) => {
+        setShowAltForm(false); // Added this line to clear the other form. DOES NOT WORK?!
         setShowForm(true); // Show the form to edit
         setEditingTaskId(task.id); // Set the task being edited
         // Pre-fill the form with task details
         setTaskName(task.taskName);
         setModelName(task.model);
         setDescription(task.description);
+        
     };
 
     const handleSubmit = async (event) => {
@@ -195,6 +223,35 @@ function TaskComponent() {
                                 {errorMessage}
                             </div>
                         )}
+                    </div>
+                )}
+                {showAltForm && (
+                    <div className="w-1/2 p-4 bg-gray-100 rounded-lg relative">
+                        <button onClick={() => clearAltForm()} className="absolute top-0 right-0 p-2">
+                            <AiOutlineClose className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <form className="space-y-4">
+                            {Object.keys(inputFields).map((key) => (
+                                <div key={key}>
+                                    <label className="block text-sm font-medium text-gray-700">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                                    <input
+                                        type="text"
+                                        value={inputFields[key]}
+                                        onChange={(e) => handleInputChange(key, e.target.value)}
+                                        className="mt-1 p-2 w-full border border-gray-300 rounded-md"
+                                    />
+                                </div>
+                            ))}
+                            <button
+                                type="button" // Prevent form submission
+                                className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
+                                onClick={() => {
+                                    clearAltForm();
+                                }}
+                            >
+                                Submit
+                            </button>
+                        </form>
                     </div>
                 )}
             </div>
