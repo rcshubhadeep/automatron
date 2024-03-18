@@ -49,7 +49,11 @@ function TaskComponent() {
         setIsLoading(true);
         const prompt = applyTemplate(selectedTask.description, inputFields);
         const result = await runSimpleUserPrompt(prompt, selectedTask.model);
-        setLlmResult(getReplyString(result)); // Store the result
+        if (result !== null){
+            setLlmResult(getReplyString(result));
+        } else {
+            setLlmResult("Sorry! We faced a problem. Please try again later.");
+        }
         setIsLoading(false);
         // Don't close the form here, so the result can be displayed
     };
@@ -267,14 +271,24 @@ function TaskComponent() {
                             </button>
                         </form>
                         {llmResult && (
-                                <div className="mt-4 p-4 bg-gray-200 rounded-md">
-                                    <p>{llmResult}</p>
-                                    <button onClick={copyResultToClipboard} className="p-2 bg-gray-300 rounded hover:bg-gray-400">
+                            <>
+                                <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md shadow-sm">
+                                    <p className="whitespace-pre-wrap">{llmResult}</p>
+                                </div>
+                                <div className="mt-2 flex justify-center">
+                                    <button
+                                        onClick={copyResultToClipboard}
+                                        className="p-2 bg-gray-300 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                        aria-label="Copy result"
+                                    >
                                         <AiOutlineCopy className="w-4 h-4 text-gray-600" /> {/* Assuming AiOutlineCopy is the correct icon */}
                                     </button>
-                                    {copySuccess && <p className="text-sm mt-2">{copySuccess}</p>} {/* Display the copy status message */}
                                 </div>
-                            )}
+                                {copySuccess && (
+                                    <div className="text-sm text-center mt-1">{copySuccess}</div>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
             </div>

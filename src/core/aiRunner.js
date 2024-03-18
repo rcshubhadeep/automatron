@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-import {getAPIKey, saveAPIKey, deleteAPIKey} from './storage'
+import {getAPIKey} from './storage'
 
 async function getOpenAIClient(){
     return  new OpenAI({
@@ -44,7 +44,7 @@ export async function getModels(){
         return [];
     }
     try{
-        const openai = getOpenAIClient()
+        const openai = await getOpenAIClient()
         const modelList =  await openai.models.list();
         // console.log(modelList);
         var final_models = new Set();
