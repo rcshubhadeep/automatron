@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import {deleteAPIKey} from '../core/aiRunner'
+import {deleteAPIKey, saveAPIKey} from '../core/storage'
 
 function SettingsComponent({ updateApiKeyPresence }) {
   const [apiKey, setApiKey] = useState('');
   const [isSaved, setIsSaved] = useState(false); // State to track save status
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Logic to save the API key
     // console.log('API Key Saved:', apiKey);
-    localStorage.setItem('openAIKey', apiKey);
+    await saveAPIKey(apiKey);
     // Security etc.
     setApiKey('');
     setIsSaved(true);
@@ -16,8 +16,8 @@ function SettingsComponent({ updateApiKeyPresence }) {
     updateApiKeyPresence(true);
   };
 
-  const handleDeleteApiKey = () => {
-    deleteAPIKey()
+  const handleDeleteApiKey = async () => {
+    await deleteAPIKey()
     updateApiKeyPresence(false); // API key is removed, so banner should show
   };
 

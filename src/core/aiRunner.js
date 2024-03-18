@@ -1,18 +1,10 @@
 import OpenAI from 'openai';
 
-const keyForAPIKey = "openAIKey";
+import {getAPIKey, saveAPIKey, deleteAPIKey} from './storage'
 
-export function getAPIKey(){
-    return localStorage.getItem(keyForAPIKey);
-}
-
-export function deleteAPIKey(){
-    localStorage.removeItem(keyForAPIKey)
-}
-
-function getOpenAIClient(){
+async function getOpenAIClient(){
     return  new OpenAI({
-        apiKey: getAPIKey(),
+        apiKey: await getAPIKey(),
         dangerouslyAllowBrowser: true
     });
 }
@@ -35,7 +27,7 @@ export async function runSimpleUserPrompt(userPrompt, model) {
         } else if (modelName === "gpt-4-turbo") {
             mName = "gpt-4-turbo-preview";
         }
-        const openai = getOpenAIClient()
+        const openai = await getOpenAIClient();
         const chatCompletion = await openai.chat.completions.create({
             messages: [{ role: 'user', content: userPrompt }],
             model: mName,
