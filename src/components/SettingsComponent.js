@@ -1,23 +1,39 @@
-import React, { useState } from 'react';
-import {deleteAPIKey, saveAPIKey} from '../core/storage'
+import React, { useState, useEffect } from 'react';
+import { getAPIKey, deleteAPIKey, saveAPIKey } from '../core/storage';
 
 function SettingsComponent({ updateApiKeyPresence }) {
-  const [apiKey, setApiKey] = useState('');
+  const [displayedApiKey, setDisplayedApiKey] = useState(''); // State for the displayed value
+  const [actualApiKey, setActualApiKey] = useState(''); // State for the actual API key value
   const [isSaved, setIsSaved] = useState(false); // State to track save status
 
+  useEffect(() => {
+    // Load the API key and set it to the displayedApiKey when the component mounts
+    (async () => {
+      const key = await getAPIKey();
+      if (key) {
+        setDisplayedApiKey('••••••••'); // Display dots to hide the actual key
+        setActualApiKey(key); // Store the actual key
+      }
+    })();
+  }, []);
+
   const handleSave = async () => {
-    // Logic to save the API key
-    // console.log('API Key Saved:', apiKey);
-    await saveAPIKey(apiKey);
-    // Security etc.
-    setApiKey('');
+    await saveAPIKey(actualApiKey);
+    setDisplayedApiKey('••••••••');
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
     updateApiKeyPresence(true);
   };
 
+  const handleInputChange = (e) => {
+    setActualApiKey(e.target.value);
+    setDisplayedApiKey(e.target.value.replace(/./g, '•')); // Replace each character with a dot
+  };
+
   const handleDeleteApiKey = async () => {
-    await deleteAPIKey()
+    await deleteAPIKey();
+    setActualApiKey('');
+    setDisplayedApiKey('');
     updateApiKeyPresence(false); // API key is removed, so banner should show
   };
 
@@ -31,8 +47,8 @@ function SettingsComponent({ updateApiKeyPresence }) {
           type="text"
           id="api-key"
           className="border border-gray-300 p-2 rounded-lg text-sm flex-1"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
+          value={displayedApiKey}
+          onChange={handleInputChange}
         />
         <button
           onClick={handleSave}
