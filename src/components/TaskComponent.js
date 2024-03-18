@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle, AiOutlineEdit } from "react-icons/ai"; // Import the '+' and 'x' icons
+import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle, AiOutlineEdit, AiOutlineCopy } from "react-icons/ai"; // Import the '+' and 'x' icons
 import {getModels, runSimpleUserPrompt, getReplyString} from "../core/aiRunner";
 import {getTasks, addTask, deleteTask, getTask, updateTask} from "../core/db";
 import {applyTemplate} from "../core/templateEngine";
@@ -18,7 +18,9 @@ function TaskComponent() {
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [showAltForm, setShowAltForm] = useState(false); // State to control the alternate form display
     const [selectedTask, setSelectedTask] = useState(null); // State to hold the selected task data
-    const [inputFields, setInputFields] = useState({}); 
+    const [inputFields, setInputFields] = useState({});
+    const [llmResult, setLlmResult] = useState('');
+    const [copySuccess, setCopySuccess] = useState('');
 
 
     // console.log(applyTemplate("My name is {{ name }}", {name: "SSS"}));
@@ -43,17 +45,31 @@ function TaskComponent() {
         setInputFields(prevFields => ({ ...prevFields, [key]: value }));
     };
 
-    const clearAltForm = async () => {
-        // console.log(selectedTask);
-        // console.log(inputFields);
+    const processForm = async () => {
         setIsLoading(true);
-        var prompt = applyTemplate(selectedTask.description, inputFields);
+        const prompt = applyTemplate(selectedTask.description, inputFields);
         const result = await runSimpleUserPrompt(prompt, selectedTask.model);
-        console.log(getReplyString(result));
+        setLlmResult(getReplyString(result)); // Store the result
         setIsLoading(false);
-        setShowAltForm(false); // Close the alternate form
-        setSelectedTask(null); // Reset the selected task
-    }
+        // Don't close the form here, so the result can be displayed
+    };
+
+    const copyResultToClipboard = () => {
+        navigator.clipboard.writeText(llmResult).then(() => {
+            setCopySuccess('Result copied to clipboard!');
+            setTimeout(() => setCopySuccess(''), 3000);
+        }, (err) => {
+            console.error('Could not copy text: ', err);
+            setCopySuccess('Failed to copy the result.');
+        });
+    };
+
+    const closeAltForm = () => {
+        setShowAltForm(false);
+        setSelectedTask(null);
+        setInputFields({});
+        setLlmResult(''); // Clear the result as well
+    };
 
     const handleDeleteTask = async (taskIdToDelete) => {
         console.log(`Deleting task with ID: ${taskIdToDelete}`);
@@ -227,7 +243,7 @@ function TaskComponent() {
                 )}
                 {showAltForm && (
                     <div className="w-1/2 p-4 bg-gray-100 rounded-lg relative">
-                        <button onClick={() => clearAltForm()} className="absolute top-0 right-0 p-2">
+                        <button onClick={() => closeAltForm()} className="absolute top-0 right-0 p-2">
                             <AiOutlineClose className="w-4 h-4 text-gray-600" />
                         </button>
                         <form className="space-y-4">
@@ -243,15 +259,22 @@ function TaskComponent() {
                                 </div>
                             ))}
                             <button
-                                type="button" // Prevent form submission
+                                type="button"
                                 className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
-                                onClick={() => {
-                                    clearAltForm();
-                                }}
+                                onClick={() => processForm()}
                             >
                                 Submit
                             </button>
                         </form>
+                        {llmResult && (
+                                <div className="mt-4 p-4 bg-gray-200 rounded-md">
+                                    <p>{llmResult}</p>
+                                    <button onClick={copyResultToClipboard} className="p-2 bg-gray-300 rounded hover:bg-gray-400">
+                                        <AiOutlineCopy className="w-4 h-4 text-gray-600" /> {/* Assuming AiOutlineCopy is the correct icon */}
+                                    </button>
+                                    {copySuccess && <p className="text-sm mt-2">{copySuccess}</p>} {/* Display the copy status message */}
+                                </div>
+                            )}
                     </div>
                 )}
             </div>
