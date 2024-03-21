@@ -163,7 +163,7 @@ function TaskComponent() {
                     <div className="spinner">Loading...</div> 
                 </div>
             )}
-            <button onClick={() => handleAddTask()} className="flex items-center justify-center p-4 bg-gray-200 rounded-full w-10 h-10">
+            <button onClick={() => handleAddTask()} className="flex items-center justify-center p-4 bg-gray-200 rounded-full w-14 h-14">
                 <AiOutlinePlus className="w-8 h-8 text-gray-600" />
             </button>
             <hr />
