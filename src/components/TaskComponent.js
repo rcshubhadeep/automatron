@@ -7,7 +7,7 @@ import {parseHandleBar} from '../core/handlebarParser';
 
 
 function TaskComponent() {
-    const [tasks, setTasks] = useState(['Task 1', 'Task 2', 'Task 3', 'Task 4']); // Example initial tasks
+    const [tasks, setTasks] = useState([]); // Example initial tasks
     const [showForm, setShowForm] = useState(false); // State to control the form display
     const [modelList, setModelList] = useState([]);
     const [taskName, setTaskName] = useState("");
@@ -163,7 +163,7 @@ function TaskComponent() {
                     <div className="spinner">Loading...</div> 
                 </div>
             )}
-            <button onClick={() => handleAddTask()} className="flex items-center justify-center p-4 bg-gray-200 rounded-full w-14 h-14">
+            <button onClick={() => handleAddTask()} className="flex items-center justify-center p-4 bg-gray-200 rounded-full w-10 h-10">
                 <AiOutlinePlus className="w-8 h-8 text-gray-600" />
             </button>
             <hr />
