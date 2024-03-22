@@ -3,7 +3,7 @@
   "name": "Nosilo",
   "version": "1.0",
   "description": "Let's you run GenAI on any website and automate mundane tasks",
-  "permissions": ["activeTab", "storage", "scripting", "contextMenus"],
+  "permissions": ["activeTab", "storage", "scripting", "contextMenus", "clipboardWrite"],
   "background": {
     "service_worker": "background.js"
   },

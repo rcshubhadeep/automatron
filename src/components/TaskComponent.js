@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AiOutlinePlus, AiOutlineClose, AiOutlineDelete, AiOutlinePlayCircle, AiOutlineEdit, AiOutlineCopy } from "react-icons/ai"; // Import the '+' and 'x' icons
 import {getModels, runSimpleUserPrompt, getReplyString} from "../core/aiRunner";
 import {getTasks, addTask, deleteTask, getTask, updateTask} from "../core/db";
@@ -21,24 +21,37 @@ function TaskComponent() {
     const [inputFields, setInputFields] = useState({});
     const [llmResult, setLlmResult] = useState('');
     const [copySuccess, setCopySuccess] = useState('');
+    const [showAltFormSubmit, setShowAltFormSubmit] = useState(false);
 
 
     // console.log(applyTemplate("My name is {{ name }}", {name: "SSS"}));
     
     const handleTaskClick = async (taskID, event) => {
-        // setIsLoading(true); // Start loading
+        
         const task = await getTask(taskID);
-        // var prompt = applyTemplate(task.description, {name: "Shubhadeep"});
-        // console.log(prompt);
-        // console.log(task.model);
-        // const result = await runSimpleUserPrompt(prompt, task.model);
-        // console.log(getReplyString(result));
+        
         setSelectedTask(task); // Set the selected task data
         setShowForm(false); // Hide the main form if it's showing
         setShowAltForm(true); // Show the alternate form
+        setLlmResult('');
+        setShowAltFormSubmit(false);
         const parsedTemplate = parseHandleBar(task.description);
-        setInputFields(parsedTemplate);
-        // setIsLoading(false); // Stop loading after the operation is complete
+        if (Object.keys(parsedTemplate).length === 0){
+            setIsLoading(true);
+            setInputFields(parsedTemplate);
+            const prompt = applyTemplate(task.description, inputFields);
+            const result = await runSimpleUserPrompt(prompt, task.model);
+            if (result !== null){
+                setLlmResult(getReplyString(result));
+            } else {
+                setLlmResult("Sorry! We faced a problem. Please try again later.");
+            }
+            setIsLoading(false);
+            // setShowAltFormSubmit(false);
+        } else {
+            setShowAltFormSubmit(true);
+            setInputFields(parsedTemplate);
+        }        
     };
 
     const handleInputChange = (key, value) => {
@@ -73,6 +86,7 @@ function TaskComponent() {
         setSelectedTask(null);
         setInputFields({});
         setLlmResult(''); // Clear the result as well
+        setShowAltFormSubmit(false);
     };
 
     const handleDeleteTask = async (taskIdToDelete) => {
@@ -107,6 +121,8 @@ function TaskComponent() {
         setTaskName(task.taskName);
         setModelName(task.model);
         setDescription(task.description);
+        setLlmResult('');
+        setShowAltFormSubmit(false);
         
     };
 
@@ -262,13 +278,15 @@ function TaskComponent() {
                                     />
                                 </div>
                             ))}
-                            <button
-                                type="button"
-                                className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
-                                onClick={() => processForm()}
-                            >
-                                Submit
-                            </button>
+                            { showAltFormSubmit && (
+                                <button
+                                    type="button"
+                                    className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
+                                    onClick={() => processForm()}
+                                >
+                                    Submit
+                                </button>
+                            )} 
                         </form>
                         {llmResult && (
                             <>
