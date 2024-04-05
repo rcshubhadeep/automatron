@@ -18,19 +18,10 @@ export async function runSimpleUserPrompt(userPrompt, model) {
         return null
     }
     try{
-        const modelName = model.split("(")[0].trim();
-        var mName = ""
-        if (modelName === "gpt-3.5"){
-            mName = "gpt-3.5-turbo";
-        } else if (modelName === "gpt-4") {
-            mName = "gpt-4-0314";
-        } else if (modelName === "gpt-4-turbo") {
-            mName = "gpt-4-turbo-preview";
-        }
         const openai = await getOpenAIClient();
         const chatCompletion = await openai.chat.completions.create({
             messages: [{ role: 'user', content: userPrompt }],
-            model: mName,
+            model: model,
           });
         return chatCompletion;
     } catch (error) {

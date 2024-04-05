@@ -4,7 +4,7 @@ import {getModels, runSimpleUserPrompt, getReplyString} from "../core/aiRunner";
 import {getTasks, addTask, deleteTask, getTask, updateTask} from "../core/db";
 import {applyTemplate} from "../core/templateEngine";
 import {parseHandleBar} from '../core/handlebarParser';
-
+import { Task } from "../core/models";
 
 function TaskComponent() {
     const [tasks, setTasks] = useState([]); // Example initial tasks
@@ -40,7 +40,7 @@ function TaskComponent() {
             setIsLoading(true);
             setInputFields(parsedTemplate);
             const prompt = applyTemplate(task.description, inputFields);
-            const result = await runSimpleUserPrompt(prompt, task.model);
+            const result = await runSimpleUserPrompt(prompt, task.realModelName);
             if (result !== null){
                 setLlmResult(getReplyString(result));
             } else {
@@ -61,7 +61,7 @@ function TaskComponent() {
     const processForm = async () => {
         setIsLoading(true);
         const prompt = applyTemplate(selectedTask.description, inputFields);
-        const result = await runSimpleUserPrompt(prompt, selectedTask.model);
+        const result = await runSimpleUserPrompt(prompt, selectedTask.realModelName);
         if (result !== null){
             setLlmResult(getReplyString(result));
         } else {
@@ -128,19 +128,22 @@ function TaskComponent() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        const taskData = {
-            taskName: taskName,
-            model: modelName || "gpt-3.5 (least powerful)", // Default model if none selected
-            description: description,
-        };
+        let task;
+        if (editingTaskId) {
+            // If we are editing an existing task, include the ID
+            task = new Task(taskName, modelName, description, editingTaskId);
+        } else {
+            // For a new task, we don't set the ID yet (it will be set in addTask)
+            task = new Task(taskName, modelName, description);
+        }
 
         try {
             console.log(editingTaskId);
             // Update existing task
             if (editingTaskId) {
-                await updateTask(editingTaskId, taskData);
+                await updateTask(editingTaskId, task);
             } else { // Add new task
-                await addTask({ ...taskData, id: Date.now() }); // Include ID only for new tasks
+                await addTask({ ...task, id: Date.now() }); // Include ID only for new tasks
             }
 
             // Fetch updated tasks list and reset form
@@ -149,7 +152,7 @@ function TaskComponent() {
             clearForm();
             setEditingTaskId(null); // Reset editing state
         } catch (error) {
-            console.log(taskData);
+            console.log(task);
             setErrorMessage(error.toString());
         }
     };

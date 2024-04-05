@@ -1,3 +1,5 @@
+import { Task } from "./models";
+
 const dbName = "automatron";
 const taskStoreName = "tasks";
 
@@ -35,12 +37,13 @@ export async function getTasks() {
         request.onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
-                const task = cursor.value;
-                task.id = cursor.key; // Assign the key as the id property of the task object
+                const { taskName, model, description } = cursor.value;
+                // Create a Task instance for each task in the database
+                const task = new Task(taskName, model, description, cursor.key); // cursor.key is used as the task ID
                 tasks.push(task);
                 cursor.continue();
             } else {
-                resolve(tasks); // Return the array of tasks with their IDs
+                resolve(tasks); // Return the array of Task instances
             }
         };
     });
@@ -75,7 +78,7 @@ export async function addTask(task) {
 }
 
 
-export async function updateTask(taskId, updatedTask) {
+export async function updateTask(taskId, updatedTaskData) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([taskStoreName], "readwrite");
@@ -89,9 +92,17 @@ export async function updateTask(taskId, updatedTask) {
             const existingTask = getRequest.result;
             if (!existingTask) return reject("Task not found.");
 
+            // Create a Task instance with the updated data
+            const updatedTask = new Task(
+                updatedTaskData.taskName || existingTask.taskName, 
+                updatedTaskData.model || existingTask.model,
+                updatedTaskData.description || existingTask.description,
+                taskId // Maintain the existing ID
+            );
+
             // If the task name hasn't changed or is empty, proceed with the update.
             if (updatedTask.taskName === existingTask.taskName || !updatedTask.taskName) {
-                const updateRequest = objectStore.put({ ...updatedTask, id: taskId });
+                const updateRequest = objectStore.put(updatedTask);
                 updateRequest.onerror = (event) => reject(`Update task error: ${event.target.error.message}`);
                 updateRequest.onsuccess = () => resolve();
             } else {
@@ -106,7 +117,7 @@ export async function updateTask(taskId, updatedTask) {
                         reject("Task name must be unique.");
                     } else {
                         // No conflict, or it's the same task, proceed with the update.
-                        const updateRequest = objectStore.put({ ...updatedTask, id: taskId });
+                        const updateRequest = objectStore.put(updatedTask);
                         updateRequest.onerror = (event) => reject(`Update task error: ${event.target.error.message}`);
                         updateRequest.onsuccess = () => resolve();
                     }
@@ -115,8 +126,6 @@ export async function updateTask(taskId, updatedTask) {
         };
     });
 }
-
-
 
 // Delete a task
 export async function deleteTask(taskId) {
@@ -148,11 +157,15 @@ export async function getTask(taskId) {
         request.onsuccess = () => {
             // Check if the task was found (request.result will be undefined if not found)
             if (request.result) {
-                resolve(request.result); // Return the found task object
+                const taskData = request.result;
+                // Create a new Task instance using the retrieved task data
+                const task = new Task(taskData.taskName, taskData.model, taskData.description, taskData.id);
+                resolve(task); // Return the Task instance
             } else {
                 resolve(null); // Return null if the task wasn't found
             }
         };
     });
 }
+
 
